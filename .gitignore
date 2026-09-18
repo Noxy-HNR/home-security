@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Runtime state: Frigate/HA/Mosquitto/dashboard data, recordings, databases
+data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# OS cruft
+Thumbs.db
+.DS_Store

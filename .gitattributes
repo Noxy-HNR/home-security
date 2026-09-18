@@ -1,0 +1,8 @@
+* text=auto
+# Runs on the Linux host: keep LF even when checked out on Windows
+*.sh text eol=lf
+*.py text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.conf text eol=lf

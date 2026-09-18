@@ -1,0 +1,96 @@
+# Home security stack. Run on the dedicated Linux box:  ./scripts/setup.sh && docker compose up -d
+#
+# Only three ports are published: the dashboard, Frigate's own (authenticated) UI for drawing
+# zones/masks, and Home Assistant for the one-time Total Connect setup. MQTT, Frigate's
+# unauthenticated API (5000) and go2rtc (1984) stay on the internal compose network, where
+# only the dashboard backend talks to them.
+
+name: home-security
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    volumes:
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./data/mosquitto:/mosquitto/data
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./data/homeassistant:/config
+      - ./config/homeassistant/configuration.yaml:/config/configuration.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      # Needed for onboarding and adding the Total Connect integration (Phase 1).
+      # Afterwards the dashboard reaches HA internally; you can remove this mapping.
+      - "${HA_PORT:-8123}:8123"
+
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:0.18.0  # config.example.yml targets this schema; bump deliberately
+    restart: unless-stopped
+    stop_grace_period: 30s
+    shm_size: ${FRIGATE_SHM_SIZE:-256mb}  # ~8 MB per 640x360 detect stream + 40 MB logs; raise for more cameras
+    environment:
+      TZ: ${TZ:-UTC}
+      FRIGATE_MQTT_USER: ${MQTT_USER}
+      FRIGATE_MQTT_PASSWORD: ${MQTT_PASSWORD}
+      FRIGATE_NVR_HOST: ${NVR_HOST}
+      FRIGATE_RTSP_USER: ${NVR_RTSP_USER}
+      FRIGATE_RTSP_PASSWORD: ${NVR_RTSP_PASSWORD}
+    volumes:
+      - ./data/frigate/config:/config
+      - ${FRIGATE_MEDIA_DIR:-./data/frigate/media}:/media/frigate
+      - /etc/localtime:/etc/localtime:ro
+      - type: tmpfs
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    # Intel iGPU: hardware video decode (ffmpeg preset-vaapi) and OpenVINO device: GPU.
+    # Uncomment if `ls /dev/dri` shows renderD128 on the host.
+    # devices:
+    #   - /dev/dri/renderD128:/dev/dri/renderD128
+    ports:
+      - "${FRIGATE_PORT:-8971}:8971"  # Frigate's own UI (login required): zones, masks, tuning
+    depends_on:
+      - mosquitto
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    user: "${DASHBOARD_UID:-10001}:${DASHBOARD_GID:-10001}"  # setup.sh sets these to your user so ./data/dashboard is writable
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+      HA_URL: http://homeassistant:8123
+      FRIGATE_URL: http://frigate:5000
+      GO2RTC_URL: http://frigate:1984
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+    volumes:
+      - ./data/dashboard:/data
+    ports:
+      - "${DASHBOARD_BIND:-0.0.0.0}:${DASHBOARD_PORT:-8080}:8080"
+    depends_on:
+      - mosquitto
+      - homeassistant
+      - frigate
+
+  # Optional: Postgres for the event log instead of SQLite.
+  #   docker compose --profile postgres up -d
+  #   DATABASE_URL=postgresql+asyncpg://security:<POSTGRES_PASSWORD>@postgres:5432/security
+  postgres:
+    image: postgres:17-alpine
+    profiles: ["postgres"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: security
+      POSTGRES_USER: security
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data

@@ -1,0 +1,1 @@
+"""Home security dashboard backend."""

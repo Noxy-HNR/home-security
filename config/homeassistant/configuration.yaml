@@ -1,0 +1,20 @@
+# Home Assistant runs headless here: it only hosts the Total Connect integration.
+# The dashboard talks to it over the WebSocket API with a long-lived access token.
+#
+# Total Connect is configured through the UI (Settings > Devices & services > Add
+# integration > Total Connect); it has no YAML setup. See docs/RUNBOOK.md, Phase 1.
+
+default_config:
+
+homeassistant:
+  name: Home
+
+# Keep HA's own history short: the dashboard keeps the event log of record.
+recorder:
+  purge_keep_days: 7
+
+logger:
+  default: warning
+  logs:
+    homeassistant.components.totalconnect: info
+    total_connect_client: info
