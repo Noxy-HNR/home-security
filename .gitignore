@@ -13,3 +13,6 @@ __pycache__/
 # OS cruft
 Thumbs.db
 .DS_Store
+
+# Frigate config folder (generated from .env; Frigate also keeps model caches here)
+frigate/

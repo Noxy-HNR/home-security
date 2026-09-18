@@ -136,7 +136,7 @@ async def check_mqtt(s: Settings) -> None:
             except TimeoutError:
                 fail(f"nothing from Frigate on {prefix}/# within 25 s: check Frigate's mqtt settings")
     except aiomqtt.MqttError as exc:
-        fail(f"cannot connect: {exc} (credentials must match MQTT_USER/MQTT_PASSWORD; re-run scripts/setup.sh)")
+        fail(f"cannot connect: {exc} (after changing MQTT_USER/MQTT_PASSWORD, run docker compose up -d so every service picks it up)")
 
 
 async def main() -> int:

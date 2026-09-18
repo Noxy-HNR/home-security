@@ -27,13 +27,33 @@ def _unb64(text: str) -> bytes:
     return base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
 
 
+def _session_key(settings: Settings) -> bytes:
+    """SESSION_SECRET if set; otherwise one generated once and kept in the data volume."""
+    if settings.session_secret:
+        return settings.session_secret.encode()
+    path = settings.data_dir / "session.key"
+    try:
+        key = path.read_bytes().strip()
+        if key:
+            return key
+    except OSError:
+        pass
+    key = secrets.token_hex(32).encode()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(key)
+        path.chmod(0o600)
+    except OSError:
+        pass  # unwritable data dir: sessions just won't survive a restart
+    return key
+
+
 class Authenticator:
     def __init__(self, settings: Settings):
         self.settings = settings
         self._password = settings.dashboard_password
         self.open = settings.auth_open
-        # Without a configured secret, sessions simply don't survive a restart.
-        self._key = (settings.session_secret or secrets.token_hex(32)).encode()
+        self._key = _session_key(settings)
         self._tokens = csv_list(settings.api_tokens)
         self._failures: dict[str, deque[float]] = defaultdict(deque)
 

@@ -35,17 +35,21 @@ one to try the sign-in screen. On Windows PowerShell use `$env:DEMO_MODE="true"`
 
 ## Deploy
 
-On the dedicated Linux box (Debian/Ubuntu Server + Docker Engine), follow
-**[docs/RUNBOOK.md](docs/RUNBOOK.md)**. It is the plan's Phase 0–6, as steps:
+Runs anywhere Docker does — Windows or macOS with Docker Desktop, or Linux with Docker
+Engine. Follow **[docs/RUNBOOK.md](docs/RUNBOOK.md)** (the plan's Phase 0–6 as steps):
 
 ```bash
 git clone <this repo> home-security && cd home-security
-./scripts/setup.sh                                   # .env, secrets, data dirs, MQTT password
-python3 scripts/probe_nvr.py --host <NVR IP> --channels <n>   # find RTSP URLs + resolutions
-# edit data/frigate/config/config.yml, then Phase 1 (Home Assistant + Total Connect)
-docker compose up -d --build
+scripts/setup.ps1                # Windows (or ./scripts/setup.sh on macOS/Linux): .env + secrets
+# set NVR_HOST / NVR_RTSP_USER / NVR_RTSP_PASSWORD in .env, then find the camera streams:
+docker compose run --rm --no-deps dashboard python -m app.probe
+# paste its NVR_MAIN_URL / NVR_SUB_URL / CAMERAS lines into .env
+docker compose up -d --build     # generates Frigate's config from .env, then starts everything
 docker compose run --rm dashboard python -m app.check   # verifies HA, Frigate, go2rtc, MQTT
 ```
+
+Detection runs on the CPU (via OpenVINO on Intel/AMD). Docker Desktop can't pass through a
+GPU or a Coral, so those speedups are Linux-only — but the plan is CPU-only anyway.
 
 ## What's in the dashboard
 
@@ -64,9 +68,17 @@ with the snapshot attached.
 
 ## Decisions that differ from the plan
 
-- **Linux host throughout.** The plan's host section says a dedicated Linux box, but §3.1
-  and Phase 0 still describe Docker Desktop + WSL2 on Windows. Everything here targets the
-  Linux box.
+- **Runs on any Docker host, not Linux-only.** Windows/macOS with Docker Desktop or Linux
+  with Docker Engine, from one `docker compose up`. Runtime state lives in Docker volumes so
+  file permissions and paths work the same everywhere; the only host folder is `frigate/`,
+  holding the config so you can edit it. An Intel iGPU or a Coral can still be passed through
+  on a Linux host for more detection headroom.
+- **Frigate's config is generated from `.env`.** No hand-editing of camera YAML: `app.probe`
+  finds the NVR's stream URLs, and a one-shot service writes `frigate/config.yml` from
+  `CAMERAS` on startup, appending new cameras without touching zones/masks you've drawn.
+- **NVR-specific (Foscam FN9108HE).** Confirmed from its firmware: no web UI, H.264-only, and
+  a built-in ONVIF + RTSP server — so `app.probe` asks it over ONVIF for the exact per-channel
+  stream URLs rather than guessing a path.
 - **Home Assistant is read over its WebSocket API, not MQTT.** HA's MQTT integration doesn't
   publish entity states by itself (that needs `mqtt_statestream`), and the WebSocket gives
   attributes, registry ids and commands with real error messages ("Invalid PIN") over one
@@ -104,19 +116,22 @@ with the snapshot attached.
 ## Development
 
 ```bash
-cd backend && .venv/bin/python -m pytest      # 48 tests: HA protocol, Total Connect model, ingest, API, auth
+cd backend && .venv/bin/python -m pytest      # 68 tests; Windows: .venv\Scripts\python -m pytest
 ```
+Covers the HA WebSocket protocol (against a fake HA), the Total Connect model, Frigate ingest,
+the API and auth, the media proxy, and the NVR probe + Frigate-config generator.
 
 ```
 backend/app/
-  main.py          app factory, security headers        api.py        REST + WebSocket routes
-  services.py      wiring + background tasks            auth.py       password/session/bearer auth
-  totalconnect.py  HA Total Connect entities -> model   alarm.py      history, events, alerts, commands
-  ha_client.py     HA WebSocket client                  detections.py Frigate MQTT -> events, archive
-  media.py         Frigate/go2rtc media proxy           alerts.py     alert rules + ntfy
-  db.py            schema + queries                     demo.py       simulators for DEMO_MODE
+  main.py          app factory, security headers        api.py         REST + WebSocket routes
+  services.py      wiring + background tasks            auth.py        password/session/bearer auth
+  totalconnect.py  HA Total Connect entities -> model   alarm.py       history, events, alerts, commands
+  ha_client.py     HA WebSocket client                  detections.py  Frigate MQTT -> events, archive
+  media.py         Frigate/go2rtc media proxy           alerts.py      alert rules + ntfy
+  db.py            schema + queries                     demo.py        simulators for DEMO_MODE
+  probe.py         find NVR streams (ONVIF + RTSP)      frigate_config.py  generate config.yml from .env
   check.py         `python -m app.check` integration verifier
 frontend/          index.html, css/app.css, js/ (app shell, store, views/)
-config/            Mosquitto, Frigate (template), Home Assistant
-scripts/           setup.sh, probe_nvr.py
+config/            Mosquitto, Home Assistant
+scripts/           setup.ps1 (Windows), setup.sh (macOS/Linux)
 ```

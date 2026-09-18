@@ -207,3 +207,14 @@ def test_real_mode_requires_a_password(settings):
     settings.dashboard_password = ""
     with pytest.raises(RuntimeError, match="DASHBOARD_PASSWORD"):
         create_app(settings)
+
+
+def test_generated_session_secret_survives_restart(settings):
+    settings.session_secret = ""
+    with TestClient(create_app(settings)) as first:
+        first.post("/api/auth/login", json={"password": PASSWORD})
+        cookie = first.cookies.get("hs_session")
+    assert (settings.data_dir / "session.key").is_file()
+    with TestClient(create_app(settings)) as second:
+        second.cookies.set("hs_session", cookie)
+        assert second.get("/api/state").status_code == 200
