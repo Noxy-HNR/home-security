@@ -203,7 +203,7 @@ export function describe(ev) {
     case "zone_restore":
       return {
         icon: zoneIcon(extra.device_class),
-        title: `${ev.subject} · ${titleCase(ev.label)}`,
+        title: `${ev.subject} Â· ${titleCase(ev.label)}`,
         detail: extra.zone_number ? `Zone ${extra.zone_number}` : "Sensor",
       };
     case "low_battery":
