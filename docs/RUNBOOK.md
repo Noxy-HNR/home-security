@@ -7,6 +7,10 @@ with a check; don't start the next one until it passes.
 Commands are the same on every platform (PowerShell, Terminal, or a Linux shell), run from the
 project folder.
 
+> **On Windows with Docker Desktop?** [SETUP-WINDOWS.md](SETUP-WINDOWS.md) is this runbook as a
+> single linear path for that one setup, and covers what a desktop host adds: WSL 2 memory
+> limits, sleep, sign-in after a reboot, the firewall prompt, and the growing disk image.
+
 ## Phase 0: Docker, `.env`, and finding the NVR's streams
 
 ### 1. Install Docker
