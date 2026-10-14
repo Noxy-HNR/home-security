@@ -18,7 +18,7 @@ export function mount(root) {
         <div class="card mini" id="mini"></div>
         <div class="card">
           <div class="card-head"><h2>Recent activity</h2><a class="small" href="#/events">All events</a></div>
-          <ul class="feed" id="feed"></ul>
+          <ul class="feed rail" id="feed"></ul>
         </div>
       </aside>
     </div>`);

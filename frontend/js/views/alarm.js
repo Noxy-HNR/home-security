@@ -47,7 +47,7 @@ function panelCard(panel, zones) {
           <p>${panel.name}${panel.partition !== "1" ? ` · partition ${panel.partition}` : ""} · ${sub}</p>
         </div>
       </div>
-      <div class="arm-buttons">${buttons}</div>
+      <div class="arm-buttons ${armedish ? "single" : ""}">${buttons}</div>
       <div class="row">
         ${!armedish && panel.instant_modes.length ? html`
           <label class="check"><input type="checkbox" data-instant> Instant (no entry delay)</label>` : ""}

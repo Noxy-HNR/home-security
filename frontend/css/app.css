@@ -146,7 +146,10 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; }
 .page-head h1 { font-size: 22px; line-height: 1.2; margin: 0; }
 .page-head .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
-.split { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; }
+/* Desktop only: the rail scrolls itself, so a long activity list can't stretch the page
+   far past the cameras. Below 1100px the rail is stacked and scrolls with the page. */
+@media (min-width: 1101px) { .feed.rail { max-height: min(62vh, 720px); overflow-y: auto; overscroll-behavior: contain; } }
 .stack { display: grid; gap: 16px; }
 .split > *, .stack > *, .panel-state > div { min-width: 0; }
 .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -253,8 +256,9 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
   display: grid; place-items: center; color: var(--text-2);
 }
 .feed-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.feed-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.feed-sub { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed-title, .feed-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.feed-title { font-weight: 600; }
+.feed-sub { font-size: 13px; color: var(--muted); }
 .feed-meta { display: grid; justify-items: end; gap: 3px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .feed-day { padding: 14px 16px 6px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--border); }
 .feed-day:first-child { border-top: 0; }
@@ -277,9 +281,11 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .mini .panel-state { gap: 12px; }
 .mini .panel-icon { width: 44px; height: 44px; border-radius: 12px; }
 .mini .panel-icon svg.i { width: 22px; height: 22px; }
+.panel-state .feed-title, .panel-state .feed-sub { display: block; -webkit-line-clamp: none; line-clamp: none; overflow: visible; }
 .panel-state h2 { margin: 0; font-size: 28px; line-height: 1.1; }
 .panel-state p { margin: 4px 0 0; color: var(--text-2); }
 .arm-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.arm-buttons.single { grid-template-columns: minmax(200px, 300px); }
 .arm-btn {
   display: grid; justify-items: center; gap: 6px; padding: 14px 10px; border-radius: 12px; cursor: pointer;
   border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-weight: 650;
@@ -300,10 +306,11 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 }
 .zone[data-tone="warning"] { border-color: color-mix(in srgb, var(--warning) 60%, var(--border)); }
 .zone[data-tone="critical"] { border-color: var(--critical); }
-.zone-top { display: flex; align-items: center; gap: 10px; }
+.zone-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .zone-top .zone-icon { color: var(--text-2); display: flex; }
 .zone-name { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.zone-num { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* flex: none, or a long name shrinks this to "Zo…" and the zone can't be identified. */
+.zone-num { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .zone-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 26px; }
 .zone-foot .spacer { flex: 1; }
 .zone-when { font-size: 12px; color: var(--muted); }
@@ -367,6 +374,9 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .table td { padding: 9px 16px; border-bottom: 1px solid var(--border); }
 .table tr:last-child td { border-bottom: 0; }
 .table .num { text-align: right; }
+/* Shrink every column to its content; .grow absorbs the leftover width. */
+.table.tight th, .table.tight td { width: 1%; white-space: nowrap; }
+.table.tight th.grow, .table.tight td.grow { width: auto; white-space: normal; }
 .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 .stat { padding: 14px 16px; }
 .stat .label { font-size: 12.5px; color: var(--muted); font-weight: 600; }

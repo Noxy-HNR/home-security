@@ -36,7 +36,13 @@ one to try the sign-in screen. On Windows PowerShell use `$env:DEMO_MODE="true"`
 ## Deploy
 
 Runs anywhere Docker does — Windows or macOS with Docker Desktop, or Linux with Docker
-Engine. Follow **[docs/RUNBOOK.md](docs/RUNBOOK.md)** (the plan's Phase 0–6 as steps):
+Engine.
+
+- **Setting up on Windows?** **[docs/SETUP-WINDOWS.md](docs/SETUP-WINDOWS.md)** is the
+  step-by-step path for one PC with Docker Desktop, including the sleep, sign-in and disk
+  problems specific to hosting this on a desktop.
+- **[docs/RUNBOOK.md](docs/RUNBOOK.md)** is the full reference: the plan's Phase 0–6 as steps,
+  on all three platforms.
 
 ```bash
 git clone <this repo> home-security && cd home-security

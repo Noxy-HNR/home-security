@@ -12,7 +12,7 @@ function sourceRow(s) {
     <td>${s.connected
       ? html`<span class="chip" data-tone="good">${icon("check")}Connected</span>`
       : html`<span class="chip" data-tone="serious">${icon("alert")}Down</span>`}</td>
-    <td class="small">${s.detail}</td>
+    <td class="small grow">${s.detail}</td>
     <td class="small muted">${relTime(s.since)}</td>
   </tr>`;
 }
@@ -67,7 +67,7 @@ export function mount(root) {
           <span><strong>${dropping.map(([c]) => state.cameras.find((cam) => cam.name === c)?.label || c).join(", ")}</strong> ${dropping.length === 1 ? "is" : "are"} skipping frames: the detector can't keep up.
           Lower <span class="mono">detect.fps</span> or the sub-stream resolution for ${dropping.length === 1 ? "that camera" : "those cameras"}, or pass the Intel iGPU through to OpenVINO.</span></div>` : ""}
         <section class="card"><div class="card-head"><h2>Connections</h2></div>
-          <table class="table"><thead><tr><th>Service</th><th>Status</th><th>Detail</th><th>Since</th></tr></thead>
+          <table class="table tight"><thead><tr><th>Service</th><th>Status</th><th class="grow">Detail</th><th>Since</th></tr></thead>
           <tbody>${sources.map(sourceRow)}</tbody></table></section>
         <section class="card"><div class="card-head"><h2>Cameras</h2></div>
           ${cameras.length ? html`<table class="table"><thead><tr><th>Camera</th><th class="num">Stream fps</th>
