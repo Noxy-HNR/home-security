@@ -7,6 +7,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     STATIC_DIR=/app/frontend \
     DATA_DIR=/data
 
+# Upgrade the system CA store past the eMudhra intermediate CA
+# compromise (October 2026): a cached base image would otherwise keep trusting them.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --only-upgrade ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt

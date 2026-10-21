@@ -1,6 +1,8 @@
 fastapi>=0.115,<1
 uvicorn[standard]>=0.32,<1
 httpx>=0.28,<1
+# certifi releases before 2026.10.19 still trust the compromised eMudhra intermediates.
+certifi>=2026.10.19
 aiomqtt>=2.3,<3
 websockets>=14,<16
 sqlalchemy[asyncio]>=2.0.36,<2.1
